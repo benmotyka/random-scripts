@@ -7,7 +7,12 @@ short_help="Usage: ./script.sh [EB_ENVIRONMENT_NAME] [FILE]\nTry'./script --help
 long_help="Long help \n"
 
 update_environment () {
-        printf "aws elasticbeanstalk update-environment --environment-name $eb_environment_name --option-settings Namespace=aws:elasticbeanstalk:application:environment,$joined_envs"
+    printf "aws elasticbeanstalk update-environment --environment-name $eb_environment_name --option-settings Namespace=aws:elasticbeanstalk:application:environment,$joined_envs"
+}
+
+dry_run () {
+    printf "aws elasticbeanstalk describe-configuration-options --environment-name $eb_environment_name --option-settings Namespace=aws:elasticbeanstalk:application:environment"
+
 }
 
 if [[ $* == *--help* ]]
@@ -47,20 +52,25 @@ done
 
 joined_envs=${joined_envs::-1}
 
-if [[ $* == *--auto-approve* ]]
+if [[ $* != *--auto-approve* ]]
+then
+    read -r -p "Are you sure to update your environment name:${bold} $eb_environment_name ${normal}with envs from file:${bold} $envs_file? ${normal}[y/N] " response
+    case "$response" in
+        [yY][eE][sS]|[yY])
+            continue
+        ;;
+        *)
+            printf "Operation aborted\n"
+            exit 1
+        ;;
+    esac
+fi
+
+if [[ $* != *--dry-run* ]]
 then
     update_environment
-    else 
-        read -r -p "Are you sure to update your environment name:${bold} $eb_environment_name ${normal}with envs from file:${bold} $envs_file? ${normal}[y/N] " response
-        case "$response" in
-            [yY][eE][sS]|[yY]) 
-                    update_environment
-                ;;
-            *)
-                printf "Operation aborted\n"
-                exit 1
-                ;;
-        esac
+else
+    dry_run
 fi
 
 
