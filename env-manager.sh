@@ -1,8 +1,15 @@
 #! /bin/bash
 
+# Font settings
 bold=$(tput bold)
 normal=$(tput sgr0)
 
+# Colors
+default='\033[0m' # No Color
+red='\033[0;31m'
+yellow='\033[0;33m' 
+
+# Longer texts
 short_help="Usage: ./script.sh [EB_ENVIRONMENT_NAME] [FILE]\nTry'./script --help' for more information.\n"
 long_help="Long help \n"
 
@@ -11,9 +18,13 @@ update_environment () {
 }
 
 dry_run () {
-    printf "aws elasticbeanstalk describe-configuration-options --environment-name $eb_environment_name --option-settings Namespace=aws:elasticbeanstalk:application:environment"
-
+    aws_response=`aws elasticbeanstalk describe-configuration-options --environment-name fake-bas-api-stage --options Namespace=aws:elasticbeanstalk:application:environment`
+    
+    arr=( $(jq '.Options[].Name' <<< $aws_response) )
+    printf '%s\n' "${arr[@]}"
 }
+
+printf "\n"
 
 if [[ $* == *--help* ]]
 then
@@ -31,7 +42,7 @@ eb_environment_name=$1
 envs_file=$2
 
 if [ ! -f "$envs_file" ]; then
-    printf "ERROR: File doesn't exist!\n"
+    printf "${red}ERROR: File doesn't exist!\n${default}"
     exit 2
 fi
 
@@ -39,7 +50,7 @@ envs=`cat $envs_file`
 
 if [ -z "$envs" ]
 then
-    printf "ERROR: Environment file empty!\n"
+    printf "${red}ERROR: Environment file empty!\n${default}"
     exit 2
 fi
 
@@ -48,7 +59,7 @@ joined_envs=""
 for value in $envs
 do
     if [[ $value != *"="* ]]; then
-        printf "ERROR: Invalid env: $value, ignoring\n"
+        printf "${yellow}WARNING: Invalid variable: $value, ignoring it\n${default}"
         continue
     fi
     env_key=`echo "$value" | cut -d "=" -f 1`
@@ -58,13 +69,14 @@ done
 
 if [[ $* != *--auto-approve* ]]
 then
-    read -r -p "Are you sure to update your environment name:${bold} $eb_environment_name ${normal}with envs from file:${bold} $envs_file? ${normal}[y/N] " response
+    printf "\n"
+    read -r -p "Are you sure to update your environment name:${bold} $eb_environment_name ${normal}with environment variables from file:${bold} $envs_file? ${normal}[y/N]: " response
     case "$response" in
         [yY][eE][sS]|[yY])
-            printf "Updating environment...\n"
+            printf "\nUpdating environment...\n"
         ;;
         *)
-            printf "Operation aborted\n"
+            printf "\nOperation aborted\n"
             exit 1
         ;;
     esac
