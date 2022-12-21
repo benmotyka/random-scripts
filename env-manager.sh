@@ -7,7 +7,7 @@ short_help="Usage: ./script.sh [EB_ENVIRONMENT_NAME] [FILE]\nTry'./script --help
 long_help="Long help \n"
 
 update_environment () {
-    printf "aws elasticbeanstalk update-environment --environment-name $eb_environment_name --option-settings Namespace=aws:elasticbeanstalk:application:environment,$joined_envs"
+    aws elasticbeanstalk update-environment --environment-name $eb_environment_name --option-settings $joined_envs
 }
 
 dry_run () {
@@ -47,17 +47,21 @@ joined_envs=""
 
 for value in $envs
 do
-    joined_envs+="$value,"
+    if [[ $value != *"="* ]]; then
+        printf "ERROR: Invalid env: $value, ignoring\n"
+        continue
+    fi
+    env_key=`echo "$value" | cut -d "=" -f 1`
+    env_value=`echo "$value" | cut -d "=" -f 2`
+    joined_envs+=" Namespace=aws:elasticbeanstalk:application:environment,OptionName=$env_key,Value=$env_value"
 done
-
-joined_envs=${joined_envs::-1}
 
 if [[ $* != *--auto-approve* ]]
 then
     read -r -p "Are you sure to update your environment name:${bold} $eb_environment_name ${normal}with envs from file:${bold} $envs_file? ${normal}[y/N] " response
     case "$response" in
         [yY][eE][sS]|[yY])
-            continue
+            printf "Updating environment...\n"
         ;;
         *)
             printf "Operation aborted\n"
