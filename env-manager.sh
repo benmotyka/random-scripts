@@ -11,25 +11,40 @@ green='\033[0;32m'
 yellow='\033[0;33m' 
 cyan='\033[0;36m' 
 
-
 # Longer texts
-short_help="Usage: ./script.sh [EB_ENVIRONMENT_NAME] [FILE]\nTry'./script --help' for more information.\n"
-long_help="Long help \n"
+short_help="Usage: ./script.sh [EB_ENVIRONMENT_NAME] [FILE]
+Try'./script --help' for more information.
+"
+long_help="Usage: ./script.sh [EB_ENVIRONMENT_NAME] [FILE]
+Manage environment variables in AWS Elastic Beanstalk environments easily.
+Example: ./env-manager my-app-prod .env.production
+FILE should contain key and value pairs.
 
-eb_environment_name=$1
-envs_file=$2
-
-envs=`cat $envs_file`
-sanitized_keys=()
-joined_envs=""
-
+Arguments:
+--help         - Print Help (this message) and exit
+--auto-approve - Skip approval before applying
+--dry-run      - perform a trial run with no changes made
+"
+env_update_success="
+${green}Environment updated successfully
+"
 
 update_environment () {
     aws_response=`aws elasticbeanstalk update-environment --environment-name $eb_environment_name --option-settings $joined_envs`
+
+    if [ $? -ne 0 ]; then
+        exit 2
+    fi
+
+    printf "${env_update_success}"
 }
 
 dry_run () {
     aws_response=`aws elasticbeanstalk describe-configuration-options --environment-name $eb_environment_name --options Namespace=aws:elasticbeanstalk:application:environment`
+    
+    if [ $? -ne 0 ]; then
+        exit 2
+    fi
 
     existing_envs=( $(jq '.Options[].Name' <<< $aws_response) )
     envs_difference=(`echo ${sanitized_keys[@]} ${existing_envs[@]} | tr ' ' '\n' | sort | uniq -u`)
@@ -37,10 +52,9 @@ dry_run () {
     changed_envs=(`echo ${new_envs[@]} ${sanitized_keys[@]} | tr ' ' '\n' | sort | uniq -u`)
 
     printf "\nDry run results:\n"
-    printf "%s\n${default}" "${changed_envs[@]}"
+    printf "${cyan}~ %s\n${default}" "${changed_envs[@]}"
+    printf "${green}+ %s\n${default}" "${new_envs[@]}"
 }
-
-printf "\n"
 
 if [[ $* == *--help* ]]
 then
@@ -54,7 +68,6 @@ then
     exit 1
 fi
 
-
 if [ ! -f "$envs_file" ]; then
     printf "${red}ERROR: File doesn't exist!\n${default}"
     exit 2
@@ -66,6 +79,12 @@ then
     exit 2
 fi
 
+eb_environment_name=$1
+envs_file=$2
+
+envs=`cat $envs_file`
+sanitized_keys=()
+joined_envs=""
 
 for value in $envs
 do
