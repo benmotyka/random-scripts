@@ -7,21 +7,37 @@ normal=$(tput sgr0)
 # Colors
 default='\033[0m' # No Color
 red='\033[0;31m'
+green='\033[0;32m' 
 yellow='\033[0;33m' 
+cyan='\033[0;36m' 
+
 
 # Longer texts
 short_help="Usage: ./script.sh [EB_ENVIRONMENT_NAME] [FILE]\nTry'./script --help' for more information.\n"
 long_help="Long help \n"
 
+eb_environment_name=$1
+envs_file=$2
+
+envs=`cat $envs_file`
+sanitized_keys=()
+joined_envs=""
+
+
 update_environment () {
-    aws elasticbeanstalk update-environment --environment-name $eb_environment_name --option-settings $joined_envs
+    aws_response=`aws elasticbeanstalk update-environment --environment-name $eb_environment_name --option-settings $joined_envs`
 }
 
 dry_run () {
-    aws_response=`aws elasticbeanstalk describe-configuration-options --environment-name fake-bas-api-stage --options Namespace=aws:elasticbeanstalk:application:environment`
-    
-    arr=( $(jq '.Options[].Name' <<< $aws_response) )
-    printf '%s\n' "${arr[@]}"
+    aws_response=`aws elasticbeanstalk describe-configuration-options --environment-name $eb_environment_name --options Namespace=aws:elasticbeanstalk:application:environment`
+
+    existing_envs=( $(jq '.Options[].Name' <<< $aws_response) )
+    envs_difference=(`echo ${sanitized_keys[@]} ${existing_envs[@]} | tr ' ' '\n' | sort | uniq -u`)
+    new_envs=(`echo ${sanitized_keys[@]} ${envs_difference[@]} | tr ' ' '\n' | sort | uniq -D | uniq`)
+    changed_envs=(`echo ${new_envs[@]} ${sanitized_keys[@]} | tr ' ' '\n' | sort | uniq -u`)
+
+    printf "\nDry run results:\n"
+    printf "%s\n${default}" "${changed_envs[@]}"
 }
 
 printf "\n"
@@ -38,15 +54,11 @@ then
     exit 1
 fi
 
-eb_environment_name=$1
-envs_file=$2
 
 if [ ! -f "$envs_file" ]; then
     printf "${red}ERROR: File doesn't exist!\n${default}"
     exit 2
 fi
-
-envs=`cat $envs_file`
 
 if [ -z "$envs" ]
 then
@@ -54,7 +66,6 @@ then
     exit 2
 fi
 
-joined_envs=""
 
 for value in $envs
 do
@@ -64,6 +75,7 @@ do
     fi
     env_key=`echo "$value" | cut -d "=" -f 1`
     env_value=`echo "$value" | cut -d "=" -f 2`
+    sanitized_keys+=("\"$env_key\"")
     joined_envs+=" Namespace=aws:elasticbeanstalk:application:environment,OptionName=$env_key,Value=$env_value"
 done
 
