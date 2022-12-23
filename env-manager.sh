@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 # Font settings
 bold=$(tput bold)
@@ -12,18 +12,23 @@ yellow='\033[0;33m'
 cyan='\033[0;36m' 
 
 # Longer texts
-short_help="Usage: ./script.sh [EB_ENVIRONMENT_NAME] [FILE]
+short_help="Usage: ${bold}./script.sh [EB_ENVIRONMENT_NAME] [FILE]${normal}
 Try'./script --help' for more information.
 "
-long_help="Usage: ./script.sh [EB_ENVIRONMENT_NAME] [FILE]
+long_help="Usage: ${bold}./script.sh [EB_ENVIRONMENT_NAME] [FILE]${normal}
 Manage environment variables in AWS Elastic Beanstalk environments easily.
-Example: ./env-manager my-app-prod .env.production
-FILE should contain key and value pairs.
+Example: ${bold}./env-manager my-app-prod .env.production${normal}
+FILE should contain KEY=\"VALUE\" pairs.
+This script ${bold}DOES NOT${normal} remove variables that exist in the console but not in the FILE. 
 
 Arguments:
---help         - Print Help (this message) and exit
---auto-approve - Skip approval before applying
---dry-run      - perform a trial run with no changes made
+--help            - Print Help (this message) and exit
+--auto-approve    - Skip approval before applying
+--dry-run         - perform a trial run with no changes made
+
+Dry run outputs:
+${cyan}~ \"KEY1\"${normal} - Environment variable has been modified according to the FILE
+${green}+ \"KEY2\"${normal} - Environment variable has been added to the console
 "
 env_update_success="
 ${green}Environment updated successfully
@@ -53,7 +58,14 @@ dry_run () {
 
     printf "\nDry run results:\n"
     printf "${cyan}~ %s\n${default}" "${changed_envs[@]}"
-    printf "${green}+ %s\n${default}" "${new_envs[@]}"
+    if [[ ${new_envs[@]} > 0 ]]; then
+        printf "${green}+ %s\n${default}" "${new_envs[@]}"
+    fi
+}
+
+remove_non_existent () {
+    existing_envs_not_in_file=TODO
+    aws_response=`aws elasticbeanstalk update-environment --environment-name $eb_environment_name --options-to-remove $existing_envs_not_in_file`
 }
 
 if [[ $* == *--help* ]]
@@ -68,8 +80,15 @@ then
     exit 1
 fi
 
+eb_environment_name=$1
+envs_file=$2
+
+envs=`cat $envs_file`
+sanitized_keys=()
+joined_envs=""
+
 if [ ! -f "$envs_file" ]; then
-    printf "${red}ERROR: File doesn't exist!\n${default}"
+    printf "${red}ERROR: Environment file doesn't exist!\n${default}"
     exit 2
 fi
 
@@ -78,13 +97,6 @@ then
     printf "${red}ERROR: Environment file empty!\n${default}"
     exit 2
 fi
-
-eb_environment_name=$1
-envs_file=$2
-
-envs=`cat $envs_file`
-sanitized_keys=()
-joined_envs=""
 
 for value in $envs
 do
@@ -104,7 +116,6 @@ then
     read -r -p "Are you sure to update your environment name:${bold} $eb_environment_name ${normal}with environment variables from file:${bold} $envs_file? ${normal}[y/N]: " response
     case "$response" in
         [yY][eE][sS]|[yY])
-            printf "\nUpdating environment...\n"
         ;;
         *)
             printf "\nOperation aborted\n"
@@ -112,6 +123,8 @@ then
         ;;
     esac
 fi
+
+printf "\nUpdating environment...\n"
 
 if [[ $* != *--dry-run* ]]
 then
