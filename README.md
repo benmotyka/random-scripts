@@ -43,9 +43,10 @@ Managing environment variables in AWS Elastic Beanstalk can be tiresome, especia
 
 ### Usage
 
-1. Clone this repo
+1. Clone this repo and enter project
    ```sh
    git clone https://github.com/benmotyka/elastic-beanstalk-env-manager.git
+   cd elastic-beanstalk-env-manager/
    ```
 2. Create file containing envs (see .env.example):
    ```
