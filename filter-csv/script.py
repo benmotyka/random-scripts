@@ -1,3 +1,4 @@
+import argparse
 import csv
 
 def filter_items(input_file1, input_file2, output_file, case_sensitive):
@@ -26,11 +27,12 @@ def filter_items(input_file1, input_file2, output_file, case_sensitive):
                 writer.writerow([item])
 
 if __name__ == "__main__":
-    print("This script filters out items from the first column of CSV file that are present in the first column of second CSV file, and creates a new file as a result.")
-    input_file1 = input("Enter the path to the first CSV file (from which items will be deleted in a new file): ")
-    input_file2 = input("Enter the path to the second CSV file (items that should be deleted): ")
-    output_file = input("Enter the path for the output CSV file: ")
-    case_sensitive = input("Should the comparison of the items be case sensitive? (Y/n): ")
+    parser = argparse.ArgumentParser(description="Filters out items from the first column of one CSV file that are present in the first column of another CSV file, and creates a new file as a result.")
+    parser.add_argument("input_file1", help="Path to the first CSV file (from which items will be deleted in a new file)")
+    parser.add_argument("input_file2", help="Path to the second CSV file (items that should be deleted)")
+    parser.add_argument("output_file", help="Path for the output CSV file")
+    parser.add_argument("--case-sensitive", dest="case_sensitive", action="store_true", help="Make the comparison of the items case sensitive")
 
-    filter_items(input_file1, input_file2, output_file, case_sensitive)
-    print(f"Filtered items have been saved to {output_file}.")
+    args = parser.parse_args()
+    filter_items(args.input_file1, args.input_file2, args.output_file, 'Y' if args.case_sensitive else 'n')
+    print(f"Filtered items have been saved to {args.output_file}.")
