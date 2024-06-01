@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Filters out items from the first column of one CSV file that are present in the first column of another CSV file, and creates a new file as a result.")
     parser.add_argument("input_file1", help="Path to the first CSV file (from which items will be deleted in a new file)")
     parser.add_argument("input_file2", help="Path to the second CSV file (items that should be deleted)")
-    parser.add_argument("output_file", help="Path for the output CSV file")
+    parser.add_argument("output_file", help="Path to the output CSV file")
     parser.add_argument("--case-sensitive", dest="case_sensitive", action="store_true", help="Make the comparison of the items case sensitive")
 
     args = parser.parse_args()
