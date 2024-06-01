@@ -7,7 +7,7 @@ def filter_items(input_file1, input_file2, output_file, case_sensitive):
         for row in csv.reader(file1):
             if row:
                 item = row[0]
-                if case_sensitive == 'n':
+                if not case_sensitive:
                     item = item.lower()
                 items_file1.add(item)  # Convert to lowercase
         
@@ -15,7 +15,7 @@ def filter_items(input_file1, input_file2, output_file, case_sensitive):
         for row in csv.reader(file2):
             if row:
                 item = row[0]
-                if case_sensitive == 'n':
+                if not case_sensitive:
                     item = item.lower()
                 items_file2.add(item)  # Convert to lowercase
         
@@ -26,7 +26,7 @@ def filter_items(input_file1, input_file2, output_file, case_sensitive):
             for item in filtered_items:
                 writer.writerow([item])
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Filters out items from the first column of one CSV file that are present in the first column of another CSV file, and creates a new file as a result.")
     parser.add_argument("input_file1", help="Path to the first CSV file (from which items will be deleted in a new file)")
     parser.add_argument("input_file2", help="Path to the second CSV file (items that should be deleted)")
@@ -34,5 +34,8 @@ if __name__ == "__main__":
     parser.add_argument("--case-sensitive", dest="case_sensitive", action="store_true", help="Make the comparison of the items case sensitive")
 
     args = parser.parse_args()
-    filter_items(args.input_file1, args.input_file2, args.output_file, 'Y' if args.case_sensitive else 'n')
+    filter_items(args.input_file1, args.input_file2, args.output_file, args.case_sensitive)
     print(f"Filtered items have been saved to {args.output_file}.")
+
+if __name__ == "__main__":
+    main()
