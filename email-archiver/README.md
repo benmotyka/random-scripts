@@ -8,5 +8,5 @@ EMAIL_USER=your_email@example.com
 EMAIL_PASSWORD=your_password
 IMAP_URL=your_imap_server_url
 ```
-2. Adjust date range and folder names in the main function in script as needed.
+2. Adjust date range and folder names in the `process_emails` function in script as needed.
 3. Run the script with `python3 script.py`.
