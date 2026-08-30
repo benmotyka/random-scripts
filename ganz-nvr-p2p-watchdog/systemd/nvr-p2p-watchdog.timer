@@ -1,0 +1,12 @@
+[Unit]
+Description=Uruchamia watchdog P2P co 30 minut
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=30min
+# Nadrabia uruchomienie pominiete, gdy urzadzenie bylo wylaczone.
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

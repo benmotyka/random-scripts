@@ -1,0 +1,3 @@
+# Nigdy nie commituj wypelnionej konfiguracji - zawiera haslo i token bota.
+nvr-p2p-watchdog.conf
+*.log

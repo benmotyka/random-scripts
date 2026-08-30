@@ -1,0 +1,18 @@
+# Konfiguracja watchdoga P2P.
+#
+# Skopiuj do /etc/nvr-p2p-watchdog.conf i uzupelnij prawdziwymi wartosciami.
+# Plik zawiera haslo i token bota, wiec MUSI miec uprawnienia 0600 root:root.
+# Nie commituj wypelnionej wersji do repozytorium.
+
+# Adres rejestratora w sieci lokalnej.
+host = 192.168.50.200
+
+# Konto w panelu rejestratora. Uwaga: login musi byc WIELKIMI LITERAMI -
+# firmware odrzuca "admin", akceptuje "ADMIN".
+user = ADMIN
+password = TUTAJ_HASLO
+
+# Powiadomienia Telegram. Zostaw puste, zeby je wylaczyc.
+# Token otrzymasz od @BotFather, chat_id np. od @userinfobot.
+telegram_token = TUTAJ_TOKEN_BOTA
+telegram_chat_id = TUTAJ_CHAT_ID

@@ -1,0 +1,11 @@
+[Unit]
+Description=Watchdog P2P rejestratora GANZ
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/nvr-p2p-watchdog/watchdog.py
+User=root
+# Skrypt sam czeka do 3 minut na ponowna rejestracje.
+TimeoutStartSec=300
